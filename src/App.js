@@ -32,12 +32,36 @@
     };
 
     const handleReset = async () => {
-        setAvg(time/count)
-        setIsActive(false);
-        
-        setTime(0);
-        setCount(0);
-    };
+      setIsActive(false);
+      setAvg(time / count); // Calculate the average before resetting count and time
+  
+      try {
+          const response = await fetch('https://back-runs.onrender.com/runs', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  count: count,
+                  time: time,
+                  avg: time / count // Use time / count to calculate the average
+              })
+          });
+  
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+  
+          const data = await response.json();
+          console.log('Success:', data);
+      } catch (error) {
+          console.error('Error:', error);
+      }
+  
+      setTime(0);
+      setCount(0);
+  };
+  
 
     return (
       <div>
