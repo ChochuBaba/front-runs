@@ -1,11 +1,14 @@
   import React, { useState } from 'react';
-  import { useEffect } from 'react';
+  import { useEffect } from 'react'; 
+  import './App.css'
+  import '@fortawesome/fontawesome-free/css/all.min.css';
 
   function App() {
     const [count, setCount] = useState(0);
     const [time, setTime] = useState(0);
     const [isActive, setIsActive] = useState(false);
     const [avg, setAvg]=useState(1);
+    const [latestRuns, setLatestRuns] = useState([]);
 
     useEffect(() => 
       {
@@ -21,15 +24,23 @@
 
           return () => clearInterval(intervalId);
       }, [isActive]);
+      
+      useEffect(() => {
+        fetchLatestRuns();
+    }, []);
 
-    const handleStart = () => {
-        setAvg(1);
-        setIsActive(true);
-    };
-
-    const handleStop = () => {
-        setIsActive(false);
-    };
+    const fetchLatestRuns = async () => {
+      try {
+          const response = await fetch('https://back-runs.onrender.com/runs/latest');
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+          const data = await response.json();
+          setLatestRuns(data);
+      } catch (error) {
+          console.error('Error:', error);
+      }
+  };
 
     const handleReset = async () => {
       setIsActive(false);
@@ -61,20 +72,50 @@
       setTime(0);
       setCount(0);
   };
+
+  const formatTime = (totalSeconds) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes} minutes ${seconds} seconds`;
+  };
+
+  const handleToggle = () => {
+    setIsActive(!isActive);
+  };
   
 
     return (
-      <div>
-      <h1 style={{ color: isActive ? 'green' : 'red' }}>Timer: {time} seconds</h1>
-      <button onClick={handleStart}>Start</button>
-      <button onClick={handleStop}>Stop</button>
+       <div className="container">
+      
+      <div className="row-container">
+        <button
+          onClick={handleToggle}
+          className={`toggle-button ${isActive ? 'pause' : 'start'}`}
+        >
+          <i className={`fas ${isActive ? 'fa-pause' : 'fa-play'}`}></i>
+        </button>
+        <h1 className="time" style={{ color: 'white '}}>
+          <span className="bold-time">{time}</span> seconds
+        </h1>
+
+      </div>
+
       <button onClick={handleReset}>Reset</button>
-      <br></br>
-      <button style={{ fontSize: '12rem', color:'blue' }} onClick={() => setCount(count + 1)}>
+      <br />
+      <button id="tapButton" onClick={() => setCount(count + 1)}>
         tap
       </button>
-        <h2>Average is : {avg}</h2>
-      </div>
+      <h2>Average is : {avg}</h2>
+      <h3>Last 5 Runs:</h3>
+      <ul className="runs">
+        {latestRuns.map((run, index) => (
+          <li key={index}>
+            Count: {run.count}, Time: {formatTime(run.time)}, Avg: {run.avg}, Date: {new Date(run.createdAt).toLocaleDateString()}
+          </li>
+        ))}
+      </ul>
+
+    </div>
     );
   }
 
